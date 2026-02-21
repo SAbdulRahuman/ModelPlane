@@ -1,0 +1,28 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go
+bin/
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+_output/
+
+# Node (UI)
+ui/node_modules/
+ui/.next/
