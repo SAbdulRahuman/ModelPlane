@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -39,7 +40,7 @@ var (
 
 	// projectImage is the name of the image which will be build and loaded
 	// with the code source changes to be tested.
-	projectImage = "example.com/modelplane:v0.0.1"
+	projectImage = getProjectImage()
 )
 
 // TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
@@ -53,13 +54,16 @@ func TestE2E(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
+	By("checking if a Kind cluster is available")
+	if !isKindClusterRunning() {
+		Skip("Skipping e2e tests: no Kind cluster found. Run 'make test-e2e' to create one automatically.")
+	}
+
 	By("building the manager(Operator) image")
 	cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
 	_, err := utils.Run(cmd)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to build the manager(Operator) image")
 
-	// TODO(user): If you want to change the e2e test vendor from Kind, ensure the image is
-	// built and available before running the tests. Also, remove the following block.
 	By("loading the manager(Operator) image on Kind")
 	err = utils.LoadImageToKindClusterWithName(projectImage)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to load the manager(Operator) image into Kind")
@@ -87,3 +91,30 @@ var _ = AfterSuite(func() {
 		utils.UninstallCertManager()
 	}
 })
+
+// getProjectImage returns the project image name from the IMG env var or a default.
+func getProjectImage() string {
+	if img, ok := os.LookupEnv("IMG"); ok && img != "" {
+		return img
+	}
+	return "modelplane/modelplane:dev"
+}
+
+// isKindClusterRunning checks whether the expected Kind cluster exists.
+func isKindClusterRunning() bool {
+	cluster := "kind"
+	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok && v != "" {
+		cluster = v
+	}
+	cmd := exec.Command("kind", "get", "clusters")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return false
+	}
+	for _, line := range strings.Split(string(output), "\n") {
+		if strings.TrimSpace(line) == cluster {
+			return true
+		}
+	}
+	return false
+}
