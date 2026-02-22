@@ -3,10 +3,14 @@
 *.dll
 *.so
 *.dylib
+*.test
 
 # Go
 bin/
 vendor/
+cover.out
+*.coverprofile
+testbin/
 
 # IDE
 .idea/
@@ -22,7 +26,11 @@ Thumbs.db
 # Build
 dist/
 _output/
+Dockerfile.cross
 
 # Node (UI)
 ui/node_modules/
 ui/.next/
+
+# Operator SDK / Kubebuilder
+bundle/
